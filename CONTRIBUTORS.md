@@ -8,7 +8,7 @@ Welcome to the SSPM Control Scraper project! Please read and follow these contri
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/<your-org-or-username>/sspm-control-scraper.git
+   git clone https://github.com/RishabhDev42/SSPMControlScraper.git
 
 2. **Create a New Branch**
 
