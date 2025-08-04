@@ -3,7 +3,7 @@ name: Enforce Branch Naming Convention
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   check-branch-name:
