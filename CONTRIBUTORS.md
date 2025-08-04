@@ -71,5 +71,3 @@ If you have questions, open an issue or contact the repository owner directly.
 
 Thanks for contributing to SSPM Control Scraper!
 
-```
-
