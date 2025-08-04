@@ -57,7 +57,7 @@ Welcome to the SSPM Control Scraper project! Please read and follow these contri
 
 * Keep branches focused on a single change or issue.
 * Run your code/test it before submitting a PR.
-* Follow the Pull Request template provided in PR.md.
+* Follow the Pull Request template provided in [PR.md](https://github.com/RishabhDev42/SSPMControlScraper/blob/main/.github/PR.md).
 
 ---
 
