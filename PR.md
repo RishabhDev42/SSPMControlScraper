@@ -12,7 +12,7 @@ Please fill out the following details to help reviewers understand your changes.
 
 ---
 
-## escription of Changes
+## Description of Changes
 
 <!-- Describe the change you made in 2–4 sentences. Include what was added, modified, or fixed, and why. -->
 
