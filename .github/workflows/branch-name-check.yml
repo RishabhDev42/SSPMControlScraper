@@ -1,0 +1,19 @@
+name: Enforce Branch Naming Convention
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name format
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          if [[ ! "$BRANCH_NAME" =~ ^[0-9]+_[a-zA-Z0-9_-]+$ ]]; then
+            echo "❌ Branch name '$BRANCH_NAME' does not match required format: <issueNumber>_<githubTag>"
+            exit 1
+          fi
+          echo "✅ Branch name '$BRANCH_NAME' is valid"
