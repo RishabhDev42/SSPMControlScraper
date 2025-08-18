@@ -1,0 +1,102 @@
+[
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Enforce Two-Factor Authentication",
+    "description": "Requires members to enter a security code in addition to their password, significantly enhancing account security by adding an extra layer of verification, even if the primary password is compromised.",
+    "category": "IAM",
+    "severity": "High",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Authentication', locate 'Two-factor authentication'. 5) Click the dropdown menu (defaulting to 'Optional') and select 'Required'. 6) (Optional) Click 'Send reminder' to prompt members to set up 2FA.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Enforce Single Sign-On (SSO)",
+    "description": "Requires members to log in with the organization's central identity provider. This centralizes identity management, improves security by reducing password sprawl, and streamlines access while enhancing auditing capabilities.",
+    "category": "IAM",
+    "severity": "High",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Authentication', locate 'Single sign-on (SSO)'. 5) Click the dropdown menu (defaulting to 'Off') and select 'Required'. 6) Configure the 'Identity provider sign-in URL', 'Identity provider sign-out URL', and upload the 'X.509 certificate' provided by your identity provider.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Enforce Strong Password Strength",
+    "description": "Ensures that members' passwords meet a high standard of complexity, making them significantly harder for attackers to guess or crack through brute-force methods, thus protecting user accounts from compromise.",
+    "category": "IAM",
+    "severity": "High",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Authentication', locate 'Password strength'. 5) Click the dropdown menu (defaulting to 'Very strong') and ensure 'Very strong' is selected to enforce the highest password complexity.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Restrict Third-Party Sign-in Options",
+    "description": "Disables the ability for members to sign in using personal Google or Apple credentials. This ensures all access is routed through the organization's controlled identity provider, preventing shadow IT and improving centralized auditing and security policies.",
+    "category": "IAM",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Authentication', locate 'Google sign-in'. 5) Toggle the switch to 'Off'. 6) Repeat for 'Apple sign-in'.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Control Passkey Sign-in Usage",
+    "description": "Allows the organization to manage whether members can use passkeys for authentication. For environments enforcing centralized identity management via SSO, disabling this option ensures all login flows are consistent and centrally controlled.",
+    "category": "IAM",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Authentication', locate 'Passkey sign-in'. 5) Toggle the switch to 'Off' to ensure all logins are managed through established organizational identity providers.",
+    "additional_info": "If passkeys are part of your organization's centrally managed security strategy, they can be enabled."
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Limit Connected Devices",
+    "description": "Restricts the number of computers and mobile devices members can connect to the Dropbox account. This reduces the attack surface by limiting potential endpoints from which sensitive organizational data can be accessed or exfiltrated.",
+    "category": "Security",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Devices', locate 'Computers'. 5) Click the 'Unlimited' dropdown and select a specific, reasonable limit (e.g., '5' or '3'). 6) Repeat steps 4-5 for 'Mobile devices'.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Configure Device Limit Policy",
+    "description": "Defines the policy for managing devices when a member reaches their connection limit. Setting this to 'Remove oldest' ensures that new, authorized devices can connect by automatically replacing the least recently used device, maintaining security posture.",
+    "category": "Security",
+    "severity": "Low",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Devices', locate 'Device limit reached'. 5) Click the dropdown menu and select 'Remove oldest' to ensure older, less-used devices are automatically removed when the limit is reached.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Enforce Fixed Web Session Duration",
+    "description": "Configures how long members can stay logged into Dropbox.com before being automatically logged out. This measure reduces the risk of unauthorized access from unattended or compromised web sessions by enforcing periodic reauthentication.",
+    "category": "Security",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Devices', locate 'Fixed web session'. 5) Click the current duration dropdown (e.g., '1 month') and select a shorter, more secure duration (e.g., '1 week' or '1 day') based on your organization's risk tolerance.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Enforce Idle Web Session Timeout",
+    "description": "Configures automatic logout for web sessions that remain inactive for a specified period. This further mitigates the risk of unauthorized access from abandoned browser sessions, especially on shared or public computers.",
+    "category": "Security",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Devices', locate 'Idle web sessions'. 5) Click the 'None' dropdown and select an appropriate idle timeout duration (e.g., '1 hour' or '30 minutes') to automatically log out inactive users.",
+    "additional_info": null
+  },
+  {
+    "application": "Dropbox",
+    "url": "https://www.dropbox.com/admin/settings",
+    "control_subject": "Manage Linked Accounts on Same Computer",
+    "description": "Controls whether members can link their personal Dropbox accounts with their team accounts on the same computer. Disabling this prevents accidental data exposure between personal and corporate contexts, ensuring all corporate data is accessed only via the secured team account.",
+    "category": "DLP",
+    "severity": "Medium",
+    "recommendations": "1) Navigate to your Dropbox Admin Console. 2) From the left sidebar, select 'Settings'. 3) Click on the 'Security' tab at the top. 4) Under 'Devices', locate 'Linked accounts'. 5) Toggle the switch to 'Off' to prevent members from linking personal and team accounts on the same device.",
+    "additional_info": null
+  }
+]
