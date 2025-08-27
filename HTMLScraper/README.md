@@ -1,5 +1,6 @@
-Playwright + n8n Runner (Java)
-Prerequisites
+# Playwright + n8n Runner (Java)
+
+## Prerequisites
 
 Java 17+ (check: java -version)
 
@@ -9,7 +10,7 @@ Google Chrome (stable)
 
 Node.js 18+ and npm (check: node -v, npm -v)
 
-1) Maven project setup
+### 1) Maven project setup
 
 Add Playwright to your pom.xml:
 
@@ -26,7 +27,7 @@ Compile once to pull deps:
 
 mvn -q clean compile
 
-2) Launch Chrome in remote-debugging mode
+### 2) Launch Chrome in remote-debugging mode
 
 Find the profile you want to use (the one that already has your credentials):
 
@@ -45,8 +46,8 @@ Linux
 google-chrome \
   --remote-debugging-port=9222 \
   --user-data-dir="$HOME/.config/google-chrome/Profile 6"
-# If your binary differs:
-# /opt/google/chrome/chrome ...   or   chromium ...
+#### If your binary differs:
+/opt/google/chrome/chrome ...   or   chromium ...
 
 Windows
 
@@ -65,7 +66,7 @@ CMD
 Keep this Chrome window open while running the workflow.
 If port 9222 is busy, change it (e.g., 9223) and keep it consistent everywhere.
 
-3) Run n8n
+### 3) Run n8n
 
 Install and start n8n locally:
 
@@ -76,11 +77,11 @@ n8n
 Open http://localhost:5678
  and sign in.
 
-4) Import the workflow
+### 4) Import the workflow
 
 In n8n, Create workflow → Import from file and choose workflow.json.
 
-5) Configure the Execute Command node
+### 5) Configure the Execute Command node
 
 This node runs your Maven Java app that uses Playwright over the Chrome debugging port.
 
@@ -128,7 +129,7 @@ PROJECT_DIR = the directory that contains your pom.xml.
 MAIN_CLASS = your Java entry point (e.g., com.example.App).
 URL = the page your scraper should open.
 
-6) Run the workflow
+### 6) Run the workflow
 
 Ensure the remote-debugging Chrome is still open.
 
@@ -136,7 +137,7 @@ In n8n, click Execute on the workflow.
 
 Output HTML is saved to target/output.html; logs → target/mvn.log.
 
-Troubleshooting
+## Troubleshooting
 
 Chrome didn’t connect? Make sure the Chrome window started with --remote-debugging-port=9222 is open. If you changed the port, your Java code must connect to that port.
 
