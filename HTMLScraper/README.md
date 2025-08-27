@@ -82,7 +82,15 @@ Open http://localhost:5678
 
 In n8n, Create workflow → Import from file and choose workflow.json.
 
-### 5) Configure the Execute Command node
+### 5) Configure Google Sheets OAuth
+
+Navigate to https://console.cloud.google.com/auth/clients
+
+Create a new client to obtain the Client ID and Client secret
+
+In the workflow, select the Create spreadsheet node, and select Credential to connect with -> Create new credential, and use the Client ID and Client secret obtained before.
+
+### 6) Configure the Execute Command node
 
 This node runs your Maven Java app that uses Playwright over the Chrome debugging port.
 
@@ -134,7 +142,7 @@ MAIN_CLASS = your Java entry point (e.g., com.example.App).
 
 URL = the page your scraper should open.
 
-### 6) Run the workflow
+### 7) Run the workflow
 
 Ensure the remote-debugging Chrome is still open.
 
@@ -142,7 +150,7 @@ In n8n, click Execute on the workflow.
 
 Output HTML is saved to target/output.html; logs → target/mvn.log.
 
-### 7) Open google sheets
+### 8) Open google sheets
 
 After the workflow has executed, open Create spreadsheet node, and locate "spreadsheetUrl"
 
