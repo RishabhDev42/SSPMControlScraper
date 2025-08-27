@@ -129,7 +129,9 @@ popd
 ```
 
 PROJECT_DIR = the directory that contains your pom.xml.
+
 MAIN_CLASS = your Java entry point (e.g., com.example.App).
+
 URL = the page your scraper should open.
 
 ### 6) Run the workflow
@@ -139,6 +141,14 @@ Ensure the remote-debugging Chrome is still open.
 In n8n, click Execute on the workflow.
 
 Output HTML is saved to target/output.html; logs → target/mvn.log.
+
+### 7) Open google sheets
+
+After the workflow has executed, open Create spreadsheet node, and locate "spreadsheetUrl"
+
+<img width="533" height="116" alt="image" src="https://github.com/user-attachments/assets/926016fc-f3c9-4ffa-ae2a-6b73f5cb51a0" />
+
+Copy and paste that URL in a web browser and see the controls.
 
 ## Troubleshooting
 
