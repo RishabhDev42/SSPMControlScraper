@@ -48,9 +48,10 @@ Linux
 google-chrome \
   --remote-debugging-port=9222 \
   --user-data-dir="$HOME/.config/google-chrome/Profile 6"
-#### If your binary differs:
-/opt/google/chrome/chrome ...   or   chromium ...
 ```
+ If your binary differs:
+```/opt/google/chrome/chrome ...   or   chromium ...```
+
 Windows (PowerShell)
 ```
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" `
