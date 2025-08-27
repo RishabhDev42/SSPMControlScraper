@@ -13,7 +13,7 @@ Node.js 18+ and npm (check: node -v, npm -v)
 ### 1) Maven project setup
 
 Add Playwright to your pom.xml:
-
+```
 <dependencies>
   <dependency>
     <groupId>com.microsoft.playwright</groupId>
@@ -21,12 +21,12 @@ Add Playwright to your pom.xml:
     <version>1.48.0</version>
   </dependency>
 </dependencies>
-
+```
 
 Compile once to pull deps:
-
+```
 mvn -q clean compile
-
+```
 ### 2) Launch Chrome in remote-debugging mode
 
 Find the profile you want to use (the one that already has your credentials):
@@ -38,30 +38,30 @@ Note Profile Path → grab the profile folder name (e.g., Profile 6)
 Now start Chrome with remote debugging (replace the profile in each command):
 
 macOS (Terminal)
+```
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --remote-debugging-port=9222 \
   --user-data-dir="$HOME/Library/Application Support/Google/Chrome/Profile 6"
-
+```
 Linux
+```
 google-chrome \
   --remote-debugging-port=9222 \
   --user-data-dir="$HOME/.config/google-chrome/Profile 6"
 #### If your binary differs:
 /opt/google/chrome/chrome ...   or   chromium ...
-
-Windows
-
-PowerShell
-
+```
+Windows (PowerShell)
+```
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" `
   --remote-debugging-port=9222 `
   --user-data-dir="$env:LOCALAPPDATA\Google\Chrome\User Data\Profile 6"
+```
 
-
-CMD
-
+Windows (CMD)
+```
 "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="%LOCALAPPDATA%\Google\Chrome\User Data\Profile 6"
-
+```
 
 Keep this Chrome window open while running the workflow.
 If port 9222 is busy, change it (e.g., 9223) and keep it consistent everywhere.
@@ -69,10 +69,10 @@ If port 9222 is busy, change it (e.g., 9223) and keep it consistent everywhere.
 ### 3) Run n8n
 
 Install and start n8n locally:
-
+```
 npm install -g n8n
 n8n
-
+```
 
 Open http://localhost:5678
  and sign in.
@@ -88,7 +88,7 @@ This node runs your Maven Java app that uses Playwright over the Chrome debuggin
 macOS / Linux
 
 Set the command to (edit the three variables only):
-
+```
 sh -lc 'set -e
 PROJECT_DIR="/path/to/mvn/project"   # folder that contains pom.xml
 MAIN_CLASS="com.example.App"         # your Java main
@@ -100,8 +100,9 @@ mvn -q -DskipTests exec:java \
   -Dexec.mainClass="$MAIN_CLASS" \
   -Dexec.args="$URL" \
   1> target/output.html 2> target/mvn.log'
-
+```
 Windows (PowerShell)
+```
 $PROJECT_DIR = "C:\path\to\mvn\project"  # folder that contains pom.xml
 $MAIN_CLASS  = "com.example.App"
 $URL         = "https://example.com"
@@ -113,8 +114,9 @@ mvn -q -DskipTests exec:java `
   -Dexec.args="$URL" `
   1> "target/output.html" 2> "target/mvn.log"
 Pop-Location
-
+```
 Windows (CMD)
+```
 set "PROJECT_DIR=C:\path\to\mvn\project"
 set "MAIN_CLASS=com.example.App"
 set "URL=https://example.com"
@@ -123,7 +125,7 @@ pushd "%PROJECT_DIR%"
 mvn -q clean compile
 mvn -q -DskipTests exec:java -Dexec.mainClass=%MAIN_CLASS% -Dexec.args="%URL%" 1> target\output.html 2> target\mvn.log
 popd
-
+```
 
 PROJECT_DIR = the directory that contains your pom.xml.
 MAIN_CLASS = your Java entry point (e.g., com.example.App).
