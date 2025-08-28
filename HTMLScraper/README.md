@@ -148,6 +148,8 @@ Ensure the remote-debugging Chrome is still open.
 
 In n8n, click Execute on the workflow.
 
+Once the workflow is running, the webpage will open. If during the scraping, anything opens that can be closed manually (by clicking an X), then that might improve the performance of the scraping. Any other window that opens, will automatically close.
+
 Output HTML is saved to target/output.html; logs → target/mvn.log.
 
 ### 8) Open google sheets
