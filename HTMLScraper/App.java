@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import com.microsoft.playwright.Browser;
@@ -29,13 +31,16 @@ public class App {
   public static void main(String[] args) {
     String targetUrl = args.length > 0
         ? args[0]
-        : "https://app-na2.hubspot.com/settings/243323139/security/login-settings";
+        : "https://accounts.intuit.com/app/account-manager/security";
 
     try (Playwright playwright = Playwright.create()) {
       Browser browser = playwright.chromium().connectOverCDP("http://localhost:9222");
 
+      // NOTE: Using the existing default context from your Chrome session.
+      // If you want isolation, use: BrowserContext context = browser.newContext();
       BrowserContext context = browser.contexts().get(0);
       context.setDefaultTimeout(10000);
+
       Page page = context.newPage();
       page.setViewportSize(1400, 1600);
       page.setDefaultTimeout(10000);
@@ -45,7 +50,7 @@ public class App {
       waitForDomSettled(page, DOM_SETTLE_BUDGET_MS, DOM_SETTLE_STEP_MS);
 
       // Scan buttons, write lists, and click only non-navigation (same-page) ones
-      scanButtonsAndAct(page);
+      scanButtonsAndAct(page, targetUrl);
 
       // dump the final main page once (NOT to stdout blob)
       dumpPage(page, "main");
@@ -95,18 +100,18 @@ public class App {
 
   // ================== SCAN + CLICK NON-NAV (SAME-PAGE) ==================
 
-  private static void scanButtonsAndAct(Page page) {
+  private static void scanButtonsAndAct(Page page, String originalUrl) {
     StringBuilder allOut = new StringBuilder();
     StringBuilder navOut = new StringBuilder();
 
     // scan main frame
-    scanFrameButtons(page, page.mainFrame(), "main", allOut, navOut);
+    scanFrameButtons(page, page.mainFrame(), "main", originalUrl, allOut, navOut);
 
     // scan child frames
     for (Frame f : page.frames()) {
       if (f == page.mainFrame()) continue;
       String tag = "frame@" + safe(f.url());
-      scanFrameButtons(page, f, tag, allOut, navOut);
+      scanFrameButtons(page, f, tag, originalUrl, allOut, navOut);
     }
 
     // write files
@@ -115,9 +120,9 @@ public class App {
   }
 
   private static void scanFrameButtons(Page page, Frame f, String label,
+                                       String originalUrl,
                                        StringBuilder allOut, StringBuilder navOut) {
     // IMPORTANT: Do NOT force-open <details>. We respect current expanded state.
-    // (Previously we did: f.evaluate("document.querySelectorAll('details').forEach(d=>d.open=true)"))
 
     Locator buttons = f.locator(BUTTON_CANDIDATES);
     int n = buttons.count();
@@ -184,7 +189,7 @@ public class App {
 
         // click only non-nav (in-page / same-page) and only if NOT already expanded
         if (!isNav && !alreadyExpanded) {
-          safeClickInPage(f, el);
+          safeClickInPage(f, el, originalUrl); // pass original URL for recovery
         }
       } catch (PlaywrightException ignore) {
         // continue
@@ -258,10 +263,21 @@ public class App {
     return false;
   }
 
-  private static void safeClickInPage(Frame f, Locator el) {
+  /**
+   * Click an element; if a popup opens, close only the newly created page(s).
+   * If this page's URL changes, navigate back to the originalUrl.
+   */
+  private static void safeClickInPage(Frame f, Locator el, String originalUrl) {
     try {
+      Page p = f.page();
+      BrowserContext ctx = p.context();
+
       int menusBefore = ((Number) f.evaluate(MENU_COUNT_JS)).intValue();
       long heightBefore = ((Number) f.evaluate("() => document.body ? document.body.scrollHeight : 0")).longValue();
+
+      // Baselines to detect navigation/popups
+      String urlBefore = p.url();
+      List<Page> before = new ArrayList<>(ctx.pages()); // snapshot pre-existing tabs
 
       el.scrollIntoViewIfNeeded();
       try { el.hover(); } catch (PlaywrightException ignore) {}
@@ -286,6 +302,25 @@ public class App {
       }
       f.waitForTimeout(WAIT_AFTER_TOGGLE_MS);
       waitForDomSettled(f.page(), DOM_SETTLE_BUDGET_MS, DOM_SETTLE_STEP_MS);
+
+      // Close ONLY the pages that were created by this click (set-diff)
+      List<Page> after = ctx.pages();
+      for (Page other : after) {
+        if (other != p && !before.contains(other)) {
+          try { other.close(); } catch (PlaywrightException ignore) {}
+        }
+      }
+
+      // If URL changed (SPA or hard nav), go back to the original URL on this page only
+      String urlAfter = p.url();
+      if (!originalUrl.equals(urlAfter)) {
+        try {
+          p.navigate(originalUrl);
+          p.waitForLoadState(LoadState.NETWORKIDLE);
+          waitForDomSettled(p, DOM_SETTLE_BUDGET_MS, DOM_SETTLE_STEP_MS);
+        } catch (PlaywrightException ignore) {}
+      }
+
     } catch (PlaywrightException ignore) {
     }
   }

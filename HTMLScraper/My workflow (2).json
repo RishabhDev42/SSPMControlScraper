@@ -1,0 +1,750 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        -16
+      ],
+      "id": "82f8aec4-faa3-43bd-ad08-6be77c540bdb",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "command": "cd /Users/natalia/playwright-java\nsh -lc 'cd /Users/natalia/playwright-java && \\\nmvn clean compile\nmvn -q -DskipTests exec:java \\\n  -Dexec.mainClass=com.example.App \\\n  -Dexec.args=\"https://accounts.cloud.databricks.com/settings/security/shield-settings?account_id=17decc37-e886-45d5-93e3-522621b42091\" \\\n  1> target/output.html 2> target/mvn.log'\n\n\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "5fad6897-50a0-413b-a210-26e224b68f4b",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "Main",
+              "cssSelector": "=body",
+              "skipSelectors": "script, style, noscript, svg, picture, figure, [hidden], [aria-hidden=\"true\"], [style*=\"display:none\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "cefd0bd6-b8d6-4ec9-b6be-e8a46ec421a5",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/Users/natalia/playwright-java/target/dumps/*.html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "98945946-0afb-43d4-81de-d1889b2a7091",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// JavaScript mode, Run once for all items\nreturn items.map((it, idx) => {\n  const bin = it.binary || {};\n  // prefer \"data\" key if present\n  const key = bin.data ? 'data' : Object.keys(bin)[0];\n  if (!key) throw new Error(`Item ${idx}: no binary found.`);\n\n  const b64 = bin[key].data;\n  if (!b64) throw new Error(`Item ${idx}: binary[${key}].data missing.`);\n\n  const html = Buffer.from(b64, 'base64').toString('utf8');\n\n  // keep some metadata if you want\n  const fileName = bin[key].fileName || `item_${idx}.html`;\n\n  return {\n    json: { html, fileName },\n    // (optional) keep the original binary alongside:\n    // binary: it.binary\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "4f35b1c9-96ec-47a4-8cf3-4a884d98d73b",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Input from previous node is plain TEXT in json.Main\nconst raw = $json.Main || $json.html || '';\n// Optional: strip [link] artifacts the HTML Extractor adds\nconst text = raw.replace(/\\s*\\[[^\\]]+\\]/g, '').replace(/\\s+/g, ' ').trim();\n\nreturn { json: { text } };\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "7eb3d364-c953-4a25-8762-872fc56d534f",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "links",
+              "cssSelector": "a[href]",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        528
+      ],
+      "id": "32e0e279-8510-46fd-9369-40c116b16989",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4512,
+        592
+      ],
+      "id": "abc8daad-45dd-4189-95f3-248f0a016859",
+      "name": "Loop Over Items",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 22
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4864,
+        240
+      ],
+      "id": "53c01111-84ce-429f-8326-64cc68ad110f",
+      "name": "Wait",
+      "webhookId": "cc6fcc0d-f1aa-4d33-a802-143c809fd3ff"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// --- 1) Pull model text robustly (Gemini + fallbacks) ---\nfunction collectText(o) {\n  const pieces = [];\n\n  // Gemini \"candidates\" shape\n  const cands = Array.isArray(o?.candidates) ? o.candidates : [];\n  for (const c of cands) {\n    const parts = c?.content?.parts || [];\n    for (const p of parts) if (typeof p?.text === 'string') pieces.push(p.text);\n  }\n\n  // Occasional alternate shapes\n  const altParts =\n    (o?.content?.parts) ||\n    (o?.gemini?.content?.parts) ||\n    (Array.isArray(o?.[0]?.candidates) ? o?.[0]?.candidates?.[0]?.content?.parts : []) ||\n    [];\n  for (const p of altParts) if (typeof p?.text === 'string') pieces.push(p.text);\n\n  if (typeof o?.output_text === 'string') pieces.push(o.output_text);\n  if (typeof o?.text === 'string') pieces.push(o.text);\n\n  return pieces.join('\\n');\n}\n\nconst raw = collectText($json);\n\n// --- 2) Find a JSON object with \"controls\" ---\nfunction pickControlsJson(s) {\n  s = String(s || '');\n\n  // a) fenced ```json ... ``` blocks\n  const blocks = [];\n  const reFence = /```(?:json)?\\s*([\\s\\S]*?)\\s*```/gi;\n  let m;\n  while ((m = reFence.exec(s)) !== null) blocks.push(m[1].trim());\n  const byControls = (a, b) => (b.includes('\"controls\"') - a.includes('\"controls\"'));\n  for (const b of blocks.sort(byControls)) {\n    try {\n      const o = JSON.parse(b);\n      if (o && (Array.isArray(o.controls) || o.controls)) return o;\n    } catch {}\n  }\n\n  // b) any {...} blob (last resort)\n  const objs = s.match(/{[\\s\\S]*?}/g) || [];\n  for (const cand of objs.sort(byControls)) {\n    try {\n      const o = JSON.parse(cand);\n      if (o && (Array.isArray(o.controls) || o.controls)) return o;\n    } catch {}\n  }\n\n  // c) top-level array of controls\n  const arrs = s.match(/\\[[\\s\\S]*?\\]/g) || [];\n  for (const cand of arrs) {\n    try {\n      const a = JSON.parse(cand);\n      if (Array.isArray(a) && a.length && (a[0].control_name || a[0].control)) {\n        return { controls: a };\n      }\n    } catch {}\n  }\n\n  return null;\n}\n\nconst parsed = pickControlsJson(raw);\nif (!parsed) {\n  throw new Error('Could not find a JSON object with \"controls\" in model output.');\n}\n\n// --- 3) Normalize rows (keep steps as STRING) ---\nconst controls = Array.isArray(parsed.controls) ? parsed.controls : [];\nconst rows = controls.map(c => ({\n  control: String(c.control_name ?? c.control ?? '').trim(),\n  description: String(c.description ?? '').trim(),\n  category: String(c.category ?? '').trim(),\n  severity: String(c.severity ?? '').trim(),\n  ui_path: String(c.ui_path ?? '').trim(),\n  // steps can be string or array from the model; keep a single string\n  steps: Array.isArray(c.steps)\n    ? c.steps.map(s => String(s)).filter(Boolean).join(' ')\n    : String(c.steps ?? '').trim(),\n  needs_human: Boolean(c.needs_human),\n})).filter(r => r.control && r.description && r.category && r.severity);\n\n// --- 4) Return ---\nreturn { json: { rows } };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3536,
+        -48
+      ],
+      "id": "8ec612e0-18c1-4bba-bf47-2aee7c8a3364",
+      "name": "Code2",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.spreadsheetUrl }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.sheets[0].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "control_name",
+              "displayName": "control_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ui_path",
+              "displayName": "ui_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "steps",
+              "displayName": "steps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "needs_human",
+              "displayName": "needs_human",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4400,
+        16
+      ],
+      "id": "cd40d73a-6812-4057-8731-26accb2c2aec",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lQGJmtJNxZ5akGjI",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "Controls",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Controls"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "4f7ede3a-8260-4500-a552-a3508748a706",
+      "name": "Create spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lQGJmtJNxZ5akGjI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5da09121-3955-4969-aa3a-8db38346ba48",
+              "name": "Control",
+              "value": "Control",
+              "type": "string"
+            },
+            {
+              "id": "d0187019-0158-4380-b536-f3bb926dfbb4",
+              "name": "Description",
+              "value": "Description",
+              "type": "string"
+            },
+            {
+              "id": "e15f04c6-d1cb-44d8-a377-a40427dd6d07",
+              "name": "Category",
+              "value": "Category",
+              "type": "string"
+            },
+            {
+              "id": "298e4502-525d-460e-a1f4-d970578ed497",
+              "name": "Severity",
+              "value": "Severity",
+              "type": "string"
+            },
+            {
+              "id": "07b96cef-bdb5-489e-ab95-a862e6190055",
+              "name": "ui_path",
+              "value": "ui_path",
+              "type": "string"
+            },
+            {
+              "id": "bf744176-76fb-4118-b31a-8f30e32bbf69",
+              "name": "steps",
+              "value": "steps",
+              "type": "string"
+            },
+            {
+              "id": "f9e2878a-9697-437f-b315-ba84ce9d43f6",
+              "name": "needs_human",
+              "value": "needs_human",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "3f09ef8e-b010-40cb-ae3e-c48e2ff429a5",
+      "name": "Edit Fields",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.sheets[0].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Control",
+              "displayName": "Control",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "d1b68946-90bc-456f-9134-9733ba6b099e",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lQGJmtJNxZ5akGjI",
+          "name": "Google Sheets account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        -176
+      ],
+      "id": "d051d2f5-4e0a-479b-af73-1f0c8457c978",
+      "name": "Split Out",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=HTML to analyze (use ONLY what is present here):\n{{ $json.text}}\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {
+          "systemMessage": "You are an SSPM extractor. INPUT = raw HTML-as-text from a captured settings page. Extract controls ONLY if their exact label appears in INPUT.  For each control output: - control_name: EXACT substring from INPUT (normalize whitespace/case only). - description: short imperative (e.g., \"Enable two-factor authentication for all users.\"). - severity: low|medium|high (risk reduction if enforced). - category: IAM|Security|DLP|Productivity (MFA/SSO/identity → IAM; password/auth/session → Security; sharing/export → DLP; convenience → Productivity). - ui_path: breadcrumb using ONLY exact substrings from INPUT, joined with \" > \", ≤ 80 chars. - steps: a SINGLE JSON STRING with numbered steps, no newlines, formatted like:   1) Open 'Security'; 2) Click 'Login settings'; 3) Select 'SAML'; 4) Save . Use ONLY exact substrings from INPUT. Do not add brackets or turn this into an array.   If a needed label isn’t present in INPUT, omit that step. - needs_human: boolean.  Rules: - Controls have priority. If a control label is present in INPUT but you cannot confidently produce ui_path or steps, still include the control and set ui_path=\"\", steps=\"\", and needs_human=true. Never omit such a control. - Never invent labels or paraphrase. - If none found, return {\"controls\": []}. - Return ONLY valid JSON (no markdown, no prose).  Output shape (exact): {\"controls\":[{\"control_name\":\"\",\"description\":\"\",\"severity\":\"\",\"category\":\"\",\"ui_path\":\"\",\"steps\":\"1) ...; 2) ...; 3) ...\",\"needs_human\":false}]}",
+          "codeExecution": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        -64
+      ],
+      "id": "501cd0a1-497f-4eba-adf4-cd0aceeb7402",
+      "name": "Message a model1",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hNggHwu2S5KmjBmX",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "controls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        4192,
+        16
+      ],
+      "id": "d680af4c-544f-4c7c-925b-e87328b50bfd",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $json;\nconst cand  = resp?.candidates?.[0] ?? resp?.response?.candidates?.[0];\nconst parts = Array.isArray(cand?.content?.parts) ? cand.content.parts : [];\nlet raw = '';\nfor (const p of parts) {\n  if (p && typeof p.text === 'string') raw += p.text;\n  else if (p?.inlineData?.data) {\n    try { raw += Buffer.from(p.inlineData.data, 'base64').toString('utf8'); } catch {}\n  }\n}\nif (!raw) throw new Error('Empty Gemini response');\n\nlet parsed;\ntry { parsed = JSON.parse(raw); }\ncatch {\n  const m = raw.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/i) || raw.match(/{[\\s\\S]*}/);\n  if (!m) throw new Error('Not valid JSON');\n  parsed = JSON.parse(m[1] || m[0]);\n}\nreturn { controls: Array.isArray(parsed?.controls) ? parsed.controls : [] };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2768,
+        176
+      ],
+      "id": "54d77a2c-d778-4293-bcea-6c7abbf4da3f",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyARq8oyZYEWq4gOYsT5qY9Fsh5_kWUqGzQ"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{\n  JSON.stringify({\n    contents: [\n      {\n        role: \"user\",\n        parts: [\n          {\n            text:\n              'You are an SSPM extractor. INPUT = raw HTML-as-text from a captured settings page. ' +\n              'Extract controls ONLY if their exact label appears in INPUT. Scan the entire INPUT and do not skip any labels. ' +\n              'For each control output: ' +\n              '- control_name: EXACT substring from INPUT (normalize whitespace/case only). ' +\n              '- description: Write a single short sentence that gives a clear directive action (e.g., \"Enable\", \"Disable\", \"Configure\", \"Set\", \"Allow only\", \"Block\", \"Restrict\", \"Require\", etc.). Do not hedge, and do not write \"enable or disable\". Always pick one action that best reduces risk. ' +\n              '- severity: low|medium|high. ' +\n              '- category: IAM|Security|DLP|Productivity (MFA/SSO/identity → IAM; password/auth/session → Security; sharing/export/public/embed/egress → DLP; convenience/UI-only → Productivity). ' +\n              '- ui_path: breadcrumb using ONLY exact substrings from INPUT, joined with \" > \", <= 80 chars. ' +\n              \"- steps: a SINGLE JSON STRING with numbered steps like: 1) Open 'Security'; 2) Click 'Login settings'; 3) Select 'SAML'; 4) Save. Use ONLY exact substrings; if a needed label is missing, omit that step. \" +\n              '- needs_human: boolean. If you are uncertain about ui_path or steps, still include the control with ui_path=\"\" and/or steps=\"\" and needs_human=true. ' +\n              'When in doubt, choose the safer action (disable/restrict for egress/external/public; enable/require for auth/hardening; set least-privilege defaults). ' +\n              'Deduplicate by control_name; include every distinct control. ' +\n              'If none found, return {\"controls\": []}. Return ONLY valid JSON (no markdown). ' +\n              'Output shape (exact): {\"controls\":[{\"control_name\":\"\",\"description\":\"\",\"severity\":\"\",\"category\":\"\",\"ui_path\":\"\",\"steps\":\"1) ...; 2) ...; 3) ...\",\"needs_human\":false}]}' +\n              '\\n\\nINPUT:\\n<<<\\n' +\n              ( ($json.text ?? $json.Main ?? $json.html) || '' ) +\n              '\\n>>>'\n          }\n        ]\n      }\n    ],\n    generationConfig: {\n      temperature: 0,\n      topP: 0,\n      topK: 1,\n      maxOutputTokens: 8192,\n      responseMimeType: \"application/json\"\n    }\n  })\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1904,
+        0
+      ],
+      "id": "803ae491-0277-482b-8208-6e2647d07d4b",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        []
+      ]
+    },
+    "Create spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        []
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        []
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d9150ad4-eb92-4c23-bd01-4d23e3eec935",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c5888a6625cdbe76ff81b747efe77ae89c5508ff2be9c32039c514a648cff8c"
+  },
+  "id": "R7hBWOePFnoChL89",
+  "tags": []
+}
