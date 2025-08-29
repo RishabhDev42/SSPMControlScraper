@@ -142,7 +142,11 @@ MAIN_CLASS = your Java entry point (e.g., com.example.App).
 
 URL = the page your scraper should open.
 
-### 7) Run the workflow
+### 7) Read/Write Node
+
+Open the Read/Write node in the worklof, and in File selectors paste the path to the folder contaning the html (dumps folder).
+
+### 8) Run the workflow
 
 Ensure the remote-debugging Chrome is still open.
 
@@ -152,7 +156,7 @@ Once the workflow is running, the webpage will open. If during the scraping, any
 
 Output HTML is saved to target/output.html; logs → target/mvn.log.
 
-### 8) Open google sheets
+### 9) Open google sheets
 
 After the workflow has executed, open Create spreadsheet node, and locate "spreadsheetUrl"
 
